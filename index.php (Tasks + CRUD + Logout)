@@ -1,0 +1,63 @@
+<?php
+session_start();
+if(!isset($_SESSION['user'])){ header("Location:login.php"); exit;}
+require "db.php";
+
+// Add Task
+if(isset($_POST['add'])){
+    $t=$_POST['title']; $d=$_POST['desc'];
+    if($t!="") $conn->query("INSERT INTO tasks(title,description) VALUES('$t','$d')");
+}
+// Update Task
+if(isset($_POST['update'])){
+    $id=$_POST['id']; $t=$_POST['title']; $d=$_POST['desc'];
+    $conn->query("UPDATE tasks SET title='$t',description='$d' WHERE id=$id");
+}
+// Delete Task
+if(isset($_GET['del'])){
+    $id=$_GET['del']; $conn->query("DELETE FROM tasks WHERE id=$id");
+}
+// Logout
+if(isset($_GET['logout'])){ session_destroy(); header("Location:login.php"); exit;}
+?>
+<!doctype html>
+<html>
+<head>
+<title>Task Manager</title>
+<link rel="stylesheet" href="style.css">
+<script src="script.js"></script>
+</head>
+<body>
+<div class="container">
+<h2>Tasks - <?php echo $_SESSION['user'];?> | <a href="?logout">Logout</a></h2>
+
+<form method="post" onsubmit="return validateTask()">
+<input name="title" placeholder="Task Title" required>
+<textarea name="desc" placeholder="Description"></textarea>
+<button name="add">Add Task</button>
+</form>
+
+<table>
+<tr><th>ID</th><th>Title</th><th>Description</th><th>Actions</th></tr>
+<?php
+$res=$conn->query("SELECT * FROM tasks ORDER BY id DESC");
+while($r=$res->fetch_assoc()){
+    echo "<tr>
+    <td>{$r['id']}</td>
+    <td>{$r['title']}</td>
+    <td>{$r['description']}</td>
+    <td>
+    <form method='post' style='display:inline'>
+    <input type='hidden' name='id' value='{$r['id']}'>
+    <input name='title' value='{$r['title']}'>
+    <input name='desc' value='{$r['description']}'> 
+    <button name='update'>Update</button>
+    </form>
+    <a href='?del={$r['id']}' onclick=\"return confirm('Delete?')\">Delete</a>
+    </td></tr>";
+}
+?>
+</table>
+</div>
+</body>
+</html>
